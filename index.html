@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NCAA Football Scores</title>
+    <title>NCAA Football Scores - ASU, UofA, NAU</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,69 +12,110 @@
             padding: 0;
         }
 
-        #scores {
+        header {
+            background-color: #003366;
+            color: white;
             padding: 20px;
-            max-width: 900px;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        #ncaa-scores {
+            max-width: 1000px;
             margin: 20px auto;
+            padding: 20px;
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
-        .game {
+        #ncaa-scores div {
             margin-bottom: 15px;
-            padding-bottom: 10px;
             border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+        }
+
+        #ncaa-scores p {
+            margin: 5px 0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #003366;
+            color: white;
         }
     </style>
 </head>
 <body>
 
+<header>
     <h1>NCAA Football Scores</h1>
-    <div id="scores">Loading scores...</div>
+</header>
 
-    <script>
-        async function fetchScores() {
-            const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-            const apiUrl = 'https://ncaa-api.henrygd.me/scoreboard/football/fbs/2024/13/all-conf';
+<div id="ncaa-scores">Loading scores...</div>
 
-            try {
-                const response = await fetch(proxyUrl + apiUrl);
-                const data = await response.json();
-                const teams = ['Arizona State', 'University of Arizona', 'Northern Arizona'];
-                
-                const filteredGames = data.games.filter(game => {
-                    const homeTeam = game.game.home.names.full;
-                    const awayTeam = game.game.away.names.full;
-                    return teams.some(team => homeTeam.includes(team) || awayTeam.includes(team));
-                });
+<footer>
+    <p>&copy; 2024 NCAA Football API</p>
+</footer>
 
-                const scoresDiv = document.getElementById('scores');
-                scoresDiv.innerHTML = '';
-                
-                if (filteredGames.length === 0) {
-                    scoresDiv.innerHTML = '<p>No games found for ASU, UofA, or NAU.</p>';
-                } else {
-                    filteredGames.forEach(game => {
-                        const gameElement = document.createElement('div');
-                        gameElement.classList.add('game');
-                        gameElement.innerHTML = `
-                            <p><strong>${game.game.home.names.full}</strong> vs <strong>${game.game.away.names.full}</strong></p>
-                            <p>Score: ${game.game.home.score} - ${game.game.away.score}</p>
-                            <p>Date: ${game.game.startDate}</p>
-                            <p>Status: ${game.game.finalMessage}</p>
-                        `;
-                        scoresDiv.appendChild(gameElement);
-                    });
-                }
+<script>
+    async function fetchScores() {
+        const apiUrl = 'https://ncaa-api.henrygd.me/scoreboard/football/fbs/2024';
 
-            } catch (error) {
-                document.getElementById('scores').innerHTML = 'Error fetching scores: ' + error.message;
+        try {
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
             }
+
+            const data = await response.json();
+            
+            // Filter the data for ASU, UofA, and NAU games
+            const teams = ['Arizona State', 'University of Arizona', 'Northern Arizona'];
+            const filteredGames = data.games.filter(game => {
+                const homeTeam = game.game.home.names.full;
+                const awayTeam = game.game.away.names.full;
+                return teams.some(team => homeTeam.includes(team) || awayTeam.includes(team));
+            });
+
+            // Render the filtered games
+            renderScores(filteredGames);
+
+        } catch (error) {
+            document.getElementById('ncaa-scores').innerHTML = 'Error fetching scores: ' + error.message;
+            console.error('Error fetching NCAA football scores:', error);
+        }
+    }
+
+    function renderScores(games) {
+        const scoresDiv = document.getElementById('ncaa-scores');
+        scoresDiv.innerHTML = '';  // Clear the loading text
+
+        if (games.length === 0) {
+            scoresDiv.innerHTML = '<p>No games found for ASU, UofA, or NAU.</p>';
+            return;
         }
 
-        fetchScores();
-    </script>
+        games.forEach(game => {
+            const gameElement = document.createElement('div');
+            gameElement.innerHTML = `
+                <p><strong>${game.game.home.names.full}</strong> vs <strong>${game.game.away.names.full}</strong></p>
+                <p>Score: ${game.game.home.score} - ${game.game.away.score}</p>
+                <p>Date: ${game.game.startDate}</p>
+                <p>Status: ${game.game.finalMessage}</p>
+            `;
+            scoresDiv.appendChild(gameElement);
+        });
+    }
+
+    // Fetch the scores when the page loads
+    fetchScores();
+</script>
 
 </body>
 </html>
